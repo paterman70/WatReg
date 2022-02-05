@@ -1,10 +1,8 @@
 Imports System.IO
 Imports System.Xml
-Imports MySql.Data.MySqlClient
 Imports Excel_App = Microsoft.Office.Interop.Excel
 
 Public Class DownLoadFromDIAYGEIA
-    Private conn As New MySqlConnection
     Private m_DataDir As String
     Private m_InputFormat As String
     Private m_DateFrom As String
