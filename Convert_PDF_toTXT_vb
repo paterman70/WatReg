@@ -1,0 +1,89 @@
+Imports System.IO
+Imports IronOcr
+Imports org.apache.pdfbox.pdmodel
+Imports org.apache.pdfbox.util
+
+Public Class Convert_PDF_to_TXT
+    Private m_TextFiles As String = "C:\inetpub\wwwroot\TEXT_FILES\"
+    Private m_DirTextFiles As String = "C:\inetpub\wwwroot\TEMP_TXT\"
+    Private m_DataDir As String
+    
+    Private Sub ExtractTXT(ByVal fi As IO.FileInfo)
+        Dim doc As PDDocument = Nothing
+        Dim st, ADA, PdfFile As String
+        Dim TxtFile As String = m_DirTextFiles
+        Dim TxtFile_store As String = m_TextFiles
+
+        Try
+           ADA = fi.Name.Substring(0, fi.Name.Length - 4)
+            PdfFile = fi.FullName.Substring(0, fi.FullName.Length - fi.Name.Length)
+
+            If Not File.Exists(TxtFile + ADA + ".txt") Then
+
+                If File.Exists(TxtFile_store + ADA + ".txt") Then
+                    My.Computer.FileSystem.MoveFile(TxtFile_store + ADA + ".txt", TxtFile + ADA + ".txt", True)
+                Else
+                    Dim stripper As New PDFTextStripper()
+                    doc = PDDocument.load(PdfFile + ADA + ".pdf")
+                    st = stripper.getText(doc)
+
+                    If Not st.Contains("ΕΛΛΗΝΙΚΗ") And Not st.Contains("ΔΗΜΟΚΡΑΤΙΑ") Then
+                       
+                        Dim Ocr As AdvancedOcr = New AdvancedOcr()
+
+                        Ocr.CleanBackgroundNoise = False
+                        Ocr.ColorDepth = 4
+                        Ocr.ColorSpace = AdvancedOcr.OcrColorSpace.Color
+                        Ocr.EnhanceContrast = False
+                        Ocr.DetectWhiteTextOnDarkBackgrounds = False
+                        Ocr.RotateAndStraighten = False
+                        Ocr.Language = IronOcr.Languages.Greek.OcrLanguagePack
+                        Ocr.EnhanceResolution = False
+                        Ocr.InputImageType = AdvancedOcr.InputTypes.Document
+                        Ocr.ReadBarCodes = False
+                        Ocr.Strategy = IronOcr.AdvancedOcr.OcrStrategy.Fast
+
+                        Dim Results As OcrResult = Ocr.ReadPdf(PdfFile + ADA + ".pdf")
+                        st = Results.Text
+
+
+                    End If
+                    My.Computer.FileSystem.WriteAllText(TxtFile + ADA + ".txt", st, False)
+
+                End If
+
+            End If
+
+
+
+        Catch ex As Exception
+
+
+        Finally
+            If doc IsNot Nothing Then
+                doc.close()
+            End If
+
+        End Try
+    End Sub
+    Public Sub Convert()
+
+        Dim path As String = m_DataDir
+        Dim di As New IO.DirectoryInfo(path)
+        Dim aryFi As IO.FileInfo() = di.GetFiles("*.pdf")
+
+        Dim fi As IO.FileInfo
+        Dim i As Integer = 0
+        Try
+            For Each fi In aryFi
+                i += 1
+                ExtractTXT(fi)
+            Next
+
+        Catch ex As Exception
+
+        End Try
+
+
+    End Sub
+End Class
